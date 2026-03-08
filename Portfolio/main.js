@@ -8,6 +8,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 /* ── BOOT (no loader — instant) ── */
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initFeaturedVideo();
+  initAutoVideoGallery();
   initCursor();
   initNav();
   initMobileMenu();
@@ -18,8 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initCounters();
   initSkillBars();
   initTiltCards();
+  initGlassTiltHighlights();
   initMagneticButtons();
   initServiceSpotlight();
+  initTestimonials();
   initWorkCursorLabel();
   initWorkFilter();
   initParallax();
@@ -28,6 +32,46 @@ document.addEventListener('DOMContentLoaded', () => {
   initPhotoUpload();
   initSmoothScroll();
 });
+
+function initFeaturedVideo() {
+  const root = $('#featuredVideo');
+  const trigger = $('#featuredVideoTrigger');
+  const frame = $('#featuredVideoFrame');
+  const title = $('#featuredVideoTitle');
+  const meta = $('#featuredVideoMeta');
+  const desc = $('#featuredVideoDesc');
+  if (!root || !trigger || !frame) return;
+
+  const videoId = root.dataset.videoId;
+  const videoUrl = root.dataset.videoUrl;
+  const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+
+  trigger.addEventListener('click', () => {
+    if (!frame.childElementCount) {
+      const iframe = document.createElement('iframe');
+      iframe.src = `${embedUrl}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1`;
+      iframe.title = 'Narottam Sharan Featured Work';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      frame.appendChild(iframe);
+    }
+    frame.classList.add('is-active');
+    trigger.style.display = 'none';
+  });
+
+  fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`)
+    .then((res) => res.ok ? res.json() : Promise.reject(new Error('oembed-failed')))
+    .then((data) => {
+      if (title) title.textContent = data.title || 'Featured Video';
+      if (meta) meta.textContent = data.author_name ? `${data.author_name} / Featured Project` : 'Featured Project';
+      if (desc) desc.textContent = 'A cinematic featured edit showcasing pacing, polish, and narrative-driven motion design.';
+    })
+    .catch(() => {
+      if (title) title.textContent = 'Featured Video';
+      if (meta) meta.textContent = 'Narottam Sharan / Featured Project';
+      if (desc) desc.textContent = 'A cinematic featured edit showcasing pacing, polish, and narrative-driven motion design.';
+    });
+}
 
 /* ── THEME ── */
 function initTheme() {
@@ -49,17 +93,22 @@ function initCursor() {
   if (window.matchMedia('(pointer:coarse)').matches) return;
   const outer = $('#cursor-outer');
   const inner = $('#cursor-inner');
+  const spot = $('#cursor-spotlight');
   let mx=0,my=0,ox=0,oy=0;
   document.addEventListener('mousemove', e => {
     mx=e.clientX; my=e.clientY;
     inner.style.left=mx+'px'; inner.style.top=my+'px';
+    if (spot) {
+      spot.style.left = mx + 'px';
+      spot.style.top = my + 'px';
+    }
   });
   (function raf(){
     ox=lerp(ox,mx,.1); oy=lerp(oy,my,.1);
     outer.style.left=ox+'px'; outer.style.top=oy+'px';
     requestAnimationFrame(raf);
   })();
-  const hoverEls = 'a,button,.exp-card,.review-card,.tool-tile,.reel-item,.long-item,.srv-tile,.pill,.filt,.ci';
+  const hoverEls = 'a,button,.exp-card,.review-card,.testimonial-card,.tool-tile,.reel-item,.long-item,.work-video-card,.srv-tile,.pill,.filt,.ci,.video-modal-close,.testimonial-btn';
   $$(hoverEls).forEach(el => {
     el.addEventListener('mouseenter', () => document.body.classList.add('cur-link'));
     el.addEventListener('mouseleave', () => document.body.classList.remove('cur-link'));
@@ -283,6 +332,33 @@ function initTiltCards() {
   });
 }
 
+function initGlassTiltHighlights() {
+  const cards = $$('.srv-tile,.testimonial-card,.work-video-card,.ci,.exp-card');
+  cards.forEach((card) => {
+    if (!card.querySelector('.glass-highlight')) {
+      const glow = document.createElement('span');
+      glow.className = 'glass-highlight';
+      card.appendChild(glow);
+    }
+
+    card.classList.add('glass-tilt');
+    if (card.dataset.glassBound === 'true') return;
+
+    card.addEventListener('mousemove', (e) => {
+      if (window.matchMedia('(pointer:coarse)').matches) return;
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      const glow = card.querySelector('.glass-highlight');
+      if (glow) {
+        glow.style.left = `${x}px`;
+        glow.style.top = `${y}px`;
+      }
+    });
+    card.dataset.glassBound = 'true';
+  });
+}
+
 /* ── MAGNETIC BUTTONS ── */
 function initMagneticButtons() {
   $$('.mag-btn').forEach(btn=>{
@@ -312,10 +388,17 @@ function initServiceSpotlight() {
 /* ── WORK CURSOR LABEL ── */
 function initWorkCursorLabel() {
   const label=$('#cursor-label');
-  $$('.reel-item,.long-item').forEach(item=>{
-    item.addEventListener('mouseenter',()=>{label.textContent='View';label.classList.add('show');});
+  $$('.work-video-card').forEach(item=>{
+    item.addEventListener('mouseenter',()=>{
+      label.textContent='View';
+      label.classList.add('show');
+      document.body.classList.add('cur-link');
+    });
     item.addEventListener('mousemove',e=>{label.style.left=e.clientX+'px';label.style.top=e.clientY+'px';});
-    item.addEventListener('mouseleave',()=>label.classList.remove('show'));
+    item.addEventListener('mouseleave',()=>{
+      label.classList.remove('show');
+      document.body.classList.remove('cur-link');
+    });
   });
 }
 
@@ -327,23 +410,26 @@ function initWorkFilter() {
       btns.forEach(b=>b.classList.remove('on'));
       btn.classList.add('on');
       const f=btn.dataset.f;
-      // show/hide sections
-      const reelsSection=$('#work-reels');
-      const longSection=$('#work-long');
+      const carouselWrap=$('#work-carousel-wrap');
       const threeDSection=$('#work-3d');
       if(f==='all'){
-        [reelsSection,longSection,threeDSection].forEach(s=>s&&(s.style.display=''));
+        workGalleryState.active='all';
+        carouselWrap&&(carouselWrap.style.display='');
+        threeDSection&&(threeDSection.style.display='none');
+        renderCarousel('all');
       } else if(f==='reels'){
-        reelsSection&&(reelsSection.style.display='');
-        longSection&&(longSection.style.display='none');
+        workGalleryState.active='reels';
+        carouselWrap&&(carouselWrap.style.display='');
         threeDSection&&(threeDSection.style.display='none');
+        renderCarousel('reels');
       } else if(f==='longform'){
-        reelsSection&&(reelsSection.style.display='none');
-        longSection&&(longSection.style.display='');
+        workGalleryState.active='longform';
+        carouselWrap&&(carouselWrap.style.display='');
         threeDSection&&(threeDSection.style.display='none');
+        renderCarousel('longform');
       } else if(f==='3d'){
-        reelsSection&&(reelsSection.style.display='none');
-        longSection&&(longSection.style.display='none');
+        workGalleryState.active='3d';
+        carouselWrap&&(carouselWrap.style.display='none');
         threeDSection&&(threeDSection.style.display='');
       }
     });
@@ -353,8 +439,14 @@ function initWorkFilter() {
 /* ── PARALLAX ── */
 function initParallax() {
   const canvas=$('#hero-canvas');
+  const workWrap=$('#work-carousel-wrap');
   window.addEventListener('scroll',()=>{
     if(canvas)canvas.style.transform=`translateY(${scrollY*.12}px)`;
+    if(workWrap){
+      const rect = workWrap.getBoundingClientRect();
+      const offset = Math.max(-16, Math.min(16, rect.top * -0.03));
+      workWrap.style.setProperty('--wall-parallax', `${offset}px`);
+    }
   },{passive:true});
 }
 
@@ -380,28 +472,38 @@ function initSmoothScroll() {
 
 /* ── FORM ── */
 function initForm() {
-  const btn=$('#submitBtn');
+  const btn=$("#submitBtn");
+  const success=$("#formSuccess");
   if(!btn)return;
-  btn.addEventListener('click',()=>{
-    const name=$('#fn').value.trim();
-    const email=$('#fe').value.trim();
-    if(!name){flash('#fn');return;}
-    if(!email){flash('#fe');return;}
-    const s=btn.querySelector('span');
-    const orig=s.textContent;
-    s.textContent='Sending…'; btn.disabled=true;
+  btn.addEventListener("click",()=>{
+    const name=$("#fn").value.trim();
+    const email=$("#fe").value.trim();
+    if(!name){flash("#fn");return;}
+    if(!email){flash("#fe");return;}
+    const text=$(".c-submit-text", btn);
+    const arrow=$(".c-submit-arrow", btn);
+    const original=text ? text.textContent : "Send Message";
+    if(success)success.classList.remove("show");
+    if(text)text.textContent="Sending...";
+    if(arrow)arrow.textContent="...";
+    btn.disabled=true;
     setTimeout(()=>{
-      s.textContent='Sent ✓'; btn.style.background='#3d9e6e';
+      if(text)text.textContent="Message Sent Successfully";
+      if(arrow)arrow.textContent="\u2713";
+      if(success)success.classList.add("show");
       setTimeout(()=>{
-        s.textContent=orig; btn.style.background=''; btn.disabled=false;
-        $$('.c-form input,.c-form textarea').forEach(el=>el.value='');
+        if(text)text.textContent=original;
+        if(arrow)arrow.innerHTML="&rarr;";
+        btn.disabled=false;
+        $$(".c-form input,.c-form textarea").forEach(el=>el.value="");
+        if(success)success.classList.remove("show");
       },3000);
     },1500);
   });
   function flash(sel){
     const el=$(sel); if(!el)return;
-    el.style.borderBottomColor='#e05555'; el.focus();
-    setTimeout(()=>el.style.borderBottomColor='',2000);
+    el.style.borderColor="#e05555"; el.focus();
+    setTimeout(()=>el.style.borderColor="",2000);
   }
 }
 
@@ -422,40 +524,645 @@ function initPhotoUpload() {
 
 
 
-/* AUTO VIDEO DATA */
-
-const videoLinks = [
-
-"https://www.instagram.com/reel/DRduRXUjBe6/embed",
-"https://www.youtube.com/embed/DGs_9L6PwrA",
-"https://www.youtube.com/embed/lXhpxEu82gY",
-"https://www.instagram.com/reel/DI6fvdkomzh/embed"
-
+/* AUTO VIDEO GALLERY */
+const videos = [
+  "https://www.youtube.com/embed/lz4s5zU7Bo0",
+  "https://www.youtube.com/embed/j6ympOT2sXc",
+  "https://www.youtube.com/embed/HHviymdkkBc",
+  "https://youtube.com/embed/DGs_9L6PwrA",
+  "https://youtube.com/embed/lXhpxEu82gY",
+  "https://www.instagram.com/reel/DRduRXUjBe6/",
+  "https://www.instagram.com/reel/DRc5vHzE09z/",
+  "https://www.instagram.com/reel/DRqiCfmCE99/",
+  "https://www.instagram.com/reel/DOlQhOBidrr/",
+  "https://www.instagram.com/reel/DI6fvdkomzh/",
+  "https://www.instagram.com/reel/DNnOoPXzQ9U/",
+  "https://www.instagram.com/reel/DOiMIqAjMMd/"
 ];
 
+// Plain YouTube embed URLs do not indicate whether the source is a Short or a long video.
+// These IDs are treated as vertical until future links are added in /shorts/ format.
+const knownShortIds = new Set([
+  "DGs_9L6PwrA",
+  "lXhpxEu82gY"
+]);
 
-function initAutoVideoGallery(){
+const workGalleryState = {
+  all: [],
+  reels: [],
+  longform: [],
+  active: 'all',
+  controlsReady: false
+};
 
-const gallery = document.getElementById("autoVideoGallery");
+const testimonialData = [
+  {
+    initials: 'GD',
+    name: 'GDG Bhilai',
+    company: 'Google Developers Group',
+    rating: 5,
+    kpi: '30% retention boost',
+    text: 'Narottam transformed our event content into cinematic recaps that felt premium and retained attention from a technical audience.'
+  },
+  {
+    initials: 'SS',
+    name: 'Santosh Suna',
+    company: 'Content Creator',
+    rating: 5,
+    kpi: '15+ videos delivered',
+    text: 'He was consistent, fast, and sharp with pacing. Every edit came back stronger than the last without requiring rounds of correction.'
+  },
+  {
+    initials: 'NL',
+    name: 'Nadavi Loans',
+    company: 'Financial Services Brand',
+    rating: 5,
+    kpi: '100% on-time delivery',
+    text: 'Complex messaging became clear, modern, and conversion-focused. The videos looked polished and landed with the right audience.'
+  },
+  {
+    initials: 'TS',
+    name: 'Techstars Weekend',
+    company: 'Startup Event',
+    rating: 5,
+    kpi: 'Same-day highlight reel',
+    text: 'The turnaround under deadline pressure was exceptional. We had a finished recap while the event still had momentum online.'
+  },
+  {
+    initials: 'KP',
+    name: 'Kriti Priya',
+    company: 'Personal Brand',
+    rating: 5,
+    kpi: 'Stronger audience response',
+    text: 'The storytelling, rhythm, and polish immediately elevated my brand. Viewers noticed the difference after the first few uploads.'
+  }
+];
 
-if(!gallery) return;
+const testimonialState = {
+  index: 1,
+  realIndex: 0,
+  cardWidth: 0,
+  intervalId: null,
+  ready: false,
+  resumeTimeoutId: null,
+  controlsBound: false,
+  inView: false
+};
 
-videoLinks.forEach(link => {
+function detectVideo(rawUrl) {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return null;
+  }
 
-const card = document.createElement("div");
-card.className = "auto-video-card";
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  const path = url.pathname.replace(/\/+$/, "");
 
-const iframe = document.createElement("iframe");
+  if (host === "youtube.com" || host === "m.youtube.com") {
+    if (path === "/watch") {
+      const id = url.searchParams.get("v");
+      return id ? buildVideoMeta(rawUrl, "youtube", "long", id) : null;
+    }
+    if (path.startsWith("/shorts/")) {
+      const id = path.split("/").filter(Boolean)[1];
+      return id ? buildVideoMeta(rawUrl, "youtube", "reel", id) : null;
+    }
+    if (path.startsWith("/embed/")) {
+      const id = path.split("/").filter(Boolean)[1];
+      if (!id) return null;
+      return buildVideoMeta(rawUrl, "youtube", knownShortIds.has(id) ? "reel" : "long", id);
+    }
+  }
 
-iframe.src = link;
-iframe.loading = "lazy";
-iframe.allowFullscreen = true;
+  if (host === "youtu.be") {
+    const id = path.split("/").filter(Boolean)[0];
+    return id ? buildVideoMeta(rawUrl, "youtube", "long", id) : null;
+  }
 
-card.appendChild(iframe);
-gallery.appendChild(card);
+  if (host === "instagram.com" || host === "instagr.am") {
+    const parts = path.split("/").filter(Boolean);
+    const bucket = parts[0];
+    const id = parts[1];
+    if ((bucket === "reel" || bucket === "reels") && id) {
+      return buildVideoMeta(rawUrl, "instagram", "reel", id);
+    }
+  }
 
-});
-
+  return null;
 }
 
-document.addEventListener("DOMContentLoaded", initAutoVideoGallery);
+function buildVideoMeta(rawUrl, provider, kind, id) {
+  const layout = kind === "reel" ? "vertical" : "horizontal";
+
+  return {
+    id,
+    rawUrl,
+    provider,
+    kind,
+    layout,
+    embedUrl: getEmbedUrl(provider, id),
+    caption: getVideoCaption(provider, kind),
+    title: getVideoTitle(provider, kind, id),
+    thumbUrl: getThumbnailUrl(provider, id)
+  };
+}
+
+function getEmbedUrl(provider, id) {
+  if (provider === "instagram") return `https://www.instagram.com/reel/${id}/embed`;
+  return `https://www.youtube.com/embed/${id}`;
+}
+
+function getThumbnailUrl(provider, id) {
+  if (provider === "youtube") return `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+  return "";
+}
+
+function getPreviewUrl(video, autoplay = false) {
+  if (video.provider === "instagram") {
+    return `${video.embedUrl}${autoplay ? '?autoplay=1' : ''}`;
+  }
+
+  const params = autoplay
+    ? '?autoplay=1&mute=1&controls=0&loop=1&playlist=' + video.id + '&rel=0&modestbranding=1'
+    : '?rel=0&modestbranding=1';
+
+  return `${video.embedUrl}${params}`;
+}
+
+function getModalUrl(video) {
+  if (video.provider === "instagram") return video.embedUrl;
+  return `${video.embedUrl}?autoplay=1&rel=0&modestbranding=1`;
+}
+
+function getVideoCaption(provider, kind) {
+  if (provider === "instagram") return "Instagram Reel";
+  if (kind === "reel") return "YouTube Short";
+  return "YouTube Video";
+}
+
+function getVideoTitle(provider, kind, id) {
+  if (provider === "instagram") return `Instagram Reel ${id.slice(0, 5)}`;
+  if (kind === "reel") return `YouTube Short ${id.slice(0, 5)}`;
+  return `YouTube Film ${id.slice(0, 5)}`;
+}
+
+function createVideoCard(video) {
+  const card = document.createElement("article");
+  card.className = `work-video-card ${video.layout === "vertical" ? "reel-item" : "long-item"} ${video.provider === "instagram" ? "is-instagram" : "is-youtube"}`;
+  card.dataset.video = video.embedUrl;
+  card.dataset.layout = video.layout;
+
+  const thumb = video.provider === "youtube"
+    ? document.createElement("img")
+    : document.createElement("div");
+
+  thumb.className = "work-video-thumb";
+
+  if (video.provider === "youtube") {
+    thumb.src = video.thumbUrl;
+    thumb.alt = video.title;
+    thumb.loading = "lazy";
+    thumb.addEventListener('error', () => {
+      thumb.src = `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`;
+    }, { once: true });
+  }
+
+  const preview = document.createElement("div");
+  preview.className = "work-video-preview";
+
+  const play = document.createElement("div");
+  play.className = "work-video-play";
+  play.textContent = "Play";
+
+  const overlay = document.createElement("div");
+  overlay.className = "work-video-overlay";
+
+  const tag = document.createElement("div");
+  tag.className = "work-video-tag";
+  tag.textContent = video.caption;
+
+  const title = document.createElement("div");
+  title.className = "work-video-title";
+  title.textContent = video.title;
+
+  overlay.appendChild(tag);
+  overlay.appendChild(title);
+
+  card.appendChild(thumb);
+  card.appendChild(preview);
+  card.appendChild(play);
+  card.appendChild(overlay);
+
+  card.addEventListener('click', () => openVideoModal(video));
+  initVideoCardPreview(card, video, preview);
+  initWorkCardTilt(card);
+
+  return card;
+}
+
+function createEmptyCard() {
+  const empty = document.createElement("div");
+  empty.className = "work-empty";
+  empty.textContent = "No videos added yet.";
+  return empty;
+}
+
+function renderCarousel(filterKey = 'all') {
+  const track = $('#workCarouselTrack');
+  const carousel = $('#videoCarousel');
+  if (!track || !carousel) return;
+
+  const items = workGalleryState[filterKey] || [];
+  track.innerHTML = "";
+
+  if (!items.length) {
+    track.appendChild(createEmptyCard());
+    track.style.setProperty('--loop-width', '0px');
+    track.style.setProperty('--carousel-duration', '1s');
+    initGlassTiltHighlights();
+    initWorkCursorLabel();
+    return;
+  }
+
+  const renderSet = (videosToRender) => {
+    videosToRender.forEach((video) => {
+      track.appendChild(createVideoCard(video));
+    });
+  };
+
+  renderSet(items);
+  renderSet(items);
+
+  requestAnimationFrame(() => {
+    const loopWidth = track.scrollWidth / 2;
+    const duration = Math.max(24, Math.round(loopWidth / 28));
+    track.style.setProperty('--loop-width', `${loopWidth}px`);
+    track.style.setProperty('--carousel-duration', `${duration}s`);
+    initGlassTiltHighlights();
+    initWorkCursorLabel();
+  });
+}
+
+function initAutoVideoGallery() {
+  const portfolioVideos = videos.map(detectVideo).filter(Boolean);
+  workGalleryState.all = portfolioVideos;
+  workGalleryState.reels = portfolioVideos.filter((video) => video.kind === "reel");
+  workGalleryState.longform = portfolioVideos.filter((video) => video.kind === "long");
+
+  renderCarousel('all');
+  initWorkCursorLabel();
+  initVideoModal();
+  initCarouselResize();
+  initCarouselControls();
+}
+
+function initWorkCardTilt(card) {
+  card.addEventListener('mousemove', (e) => {
+    if (window.matchMedia('(pointer:coarse)').matches) return;
+    const r = card.getBoundingClientRect();
+    const rx = (((e.clientY - r.top - r.height / 2) / r.height) * -8).toFixed(2);
+    const ry = (((e.clientX - r.left - r.width / 2) / r.width) * 10).toFixed(2);
+    card.style.setProperty('--tilt-x', `${rx}deg`);
+    card.style.setProperty('--tilt-y', `${ry}deg`);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.setProperty('--tilt-x', '0deg');
+    card.style.setProperty('--tilt-y', '0deg');
+  });
+}
+
+function initVideoModal() {
+  const modal = $('#videoModal');
+  const closeBtn = $('#videoModalClose');
+  const backdrop = $('#videoModalBackdrop');
+  if (!modal || modal.dataset.ready === 'true') return;
+
+  const close = () => closeVideoModal();
+  closeBtn && closeBtn.addEventListener('click', close);
+  backdrop && backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+  });
+  modal.dataset.ready = 'true';
+}
+
+function openVideoModal(video) {
+  const modal = $('#videoModal');
+  const frame = $('#videoModalFrame');
+  if (!modal || !frame) return;
+
+  frame.className = `video-modal-frame${video.layout === 'vertical' ? ' is-vertical' : ''}`;
+  frame.innerHTML = '';
+
+  const iframe = document.createElement('iframe');
+  iframe.src = getModalUrl(video);
+  iframe.allowFullscreen = true;
+  iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.title = video.title;
+  frame.appendChild(iframe);
+
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+  const modal = $('#videoModal');
+  const frame = $('#videoModalFrame');
+  if (!modal || !frame) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  frame.innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+function initCarouselResize() {
+  if (window._workCarouselResizeBound) return;
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if ($('#work-carousel-wrap')?.style.display !== 'none') {
+        renderCarousel(workGalleryState.active);
+        initWorkCursorLabel();
+      }
+    }, 120);
+  });
+  window._workCarouselResizeBound = true;
+}
+
+function initTestimonials() {
+  const track = $('#testimonialTrack');
+  const dots = $('#testimonialDots');
+  const carousel = track?.parentElement;
+  if (!track) return;
+
+  track.innerHTML = '';
+  dots && (dots.innerHTML = '');
+
+  const loopedItems = [
+    testimonialData[testimonialData.length - 1],
+    ...testimonialData,
+    testimonialData[0]
+  ];
+
+  loopedItems.forEach((item, idx) => {
+    const card = createTestimonialCard(item);
+    card.dataset.clone = idx === 0 || idx === loopedItems.length - 1 ? 'true' : 'false';
+    track.appendChild(card);
+  });
+
+  testimonialData.forEach((_, idx) => {
+    const dot = document.createElement('button');
+    dot.className = 'testimonial-dot';
+    dot.type = 'button';
+    dot.setAttribute('aria-label', `Go to testimonial ${idx + 1}`);
+    dot.addEventListener('click', () => goToTestimonial(idx + 1, true));
+    dots && dots.appendChild(dot);
+  });
+
+  bindTestimonialControls();
+  bindTestimonialLoop(track);
+  updateTestimonialPosition(true);
+  updateTestimonialStates();
+  initGlassTiltHighlights();
+
+  if (carousel && !carousel.dataset.bound) {
+    carousel.addEventListener('mouseenter', () => {
+      clearInterval(testimonialState.intervalId);
+      clearTimeout(testimonialState.resumeTimeoutId);
+    });
+    carousel.addEventListener('mouseleave', () => pauseAndResumeTestimonials(2200));
+    carousel.dataset.bound = 'true';
+  }
+
+  if (!testimonialState.ready) {
+    window.addEventListener('resize', () => {
+      updateTestimonialPosition(true);
+      updateTestimonialStates();
+    });
+    initTestimonialObserver();
+    testimonialState.ready = true;
+  }
+}
+
+function createTestimonialCard(item) {
+  const card = document.createElement('article');
+  card.className = 'testimonial-card';
+
+  const top = document.createElement('div');
+  top.className = 'testimonial-top';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'testimonial-avatar';
+  avatar.textContent = item.initials;
+
+  const meta = document.createElement('div');
+  meta.className = 'testimonial-meta';
+
+  const name = document.createElement('div');
+  name.className = 'testimonial-name';
+  name.textContent = item.name;
+
+  const company = document.createElement('div');
+  company.className = 'testimonial-company';
+  company.textContent = item.company;
+
+  meta.appendChild(name);
+  meta.appendChild(company);
+  top.appendChild(avatar);
+  top.appendChild(meta);
+
+  const stars = document.createElement('div');
+  stars.className = 'testimonial-stars';
+  stars.textContent = '★'.repeat(item.rating);
+
+  const text = document.createElement('p');
+  text.className = 'testimonial-text';
+  text.textContent = item.text;
+
+  const kpi = document.createElement('div');
+  kpi.className = 'testimonial-kpi';
+  kpi.textContent = item.kpi;
+
+  card.appendChild(top);
+  card.appendChild(stars);
+  card.appendChild(text);
+  card.appendChild(kpi);
+
+  card.addEventListener('mouseenter', () => document.body.classList.add('cur-link'));
+  card.addEventListener('mouseleave', () => document.body.classList.remove('cur-link'));
+
+  return card;
+}
+
+function bindTestimonialControls() {
+  if (testimonialState.controlsBound) return;
+  const prev = $('#testimonialPrev');
+  const next = $('#testimonialNext');
+  prev && prev.addEventListener('click', () => stepTestimonial(-1, true));
+  next && next.addEventListener('click', () => stepTestimonial(1, true));
+  testimonialState.controlsBound = true;
+}
+
+function stepTestimonial(direction, fromUser = false) {
+  testimonialState.index += direction;
+  updateTestimonialPosition();
+  updateTestimonialStates();
+  if (fromUser) pauseAndResumeTestimonials();
+}
+
+function updateTestimonialPosition(skipTransition = false) {
+  const track = $('#testimonialTrack');
+  if (!track || !track.children.length) return;
+
+  const first = track.children[0];
+  const gap = 22;
+  testimonialState.cardWidth = first.getBoundingClientRect().width + gap;
+  if (skipTransition) track.style.transition = 'none';
+  const viewport = track.parentElement?.getBoundingClientRect().width || 0;
+  const offset = Math.max(0, (viewport - first.getBoundingClientRect().width) / 2);
+  track.style.transform = `translateX(calc(${-testimonialState.index * testimonialState.cardWidth}px + ${offset}px))`;
+  if (skipTransition) {
+    requestAnimationFrame(() => {
+      track.style.transition = '';
+    });
+  }
+}
+
+function restartTestimonialAutoSlide() {
+  clearInterval(testimonialState.intervalId);
+  if (!testimonialState.inView) return;
+  testimonialState.intervalId = setInterval(() => {
+    stepTestimonial(1);
+  }, 4200);
+}
+
+function pauseAndResumeTestimonials(delay = 6500) {
+  clearInterval(testimonialState.intervalId);
+  clearTimeout(testimonialState.resumeTimeoutId);
+  testimonialState.resumeTimeoutId = setTimeout(() => {
+    restartTestimonialAutoSlide();
+  }, delay);
+}
+
+function updateTestimonialStates() {
+  const track = $('#testimonialTrack');
+  const dots = $$('.testimonial-dot');
+  if (!track) return;
+
+  const cards = [...track.children];
+  const total = testimonialData.length;
+  let realIndex = testimonialState.index - 1;
+  if (realIndex < 0) realIndex = total - 1;
+  if (realIndex >= total) realIndex = 0;
+  testimonialState.realIndex = realIndex;
+
+  cards.forEach((card, idx) => {
+    card.classList.remove('is-active', 'is-near');
+    if (idx === testimonialState.index) card.classList.add('is-active');
+    if (idx === testimonialState.index - 1 || idx === testimonialState.index + 1) card.classList.add('is-near');
+  });
+
+  dots.forEach((dot, idx) => {
+    dot.classList.toggle('is-active', idx === testimonialState.realIndex);
+  });
+}
+
+function goToTestimonial(slideIndex, fromUser = false) {
+  testimonialState.index = slideIndex;
+  updateTestimonialPosition();
+  updateTestimonialStates();
+  if (fromUser) pauseAndResumeTestimonials();
+}
+
+function bindTestimonialLoop(track) {
+  if (track.dataset.loopBound === 'true') return;
+  track.addEventListener('transitionend', () => {
+    if (testimonialState.index === 0) {
+      testimonialState.index = testimonialData.length;
+      updateTestimonialPosition(true);
+      updateTestimonialStates();
+    } else if (testimonialState.index === testimonialData.length + 1) {
+      testimonialState.index = 1;
+      updateTestimonialPosition(true);
+      updateTestimonialStates();
+    }
+  });
+  track.dataset.loopBound = 'true';
+}
+
+function initTestimonialObserver() {
+  const section = $('#clients');
+  if (!section) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        section.classList.add('testimonials-in');
+        testimonialState.inView = true;
+        restartTestimonialAutoSlide();
+      } else {
+        testimonialState.inView = false;
+        clearInterval(testimonialState.intervalId);
+      }
+    });
+  }, { threshold: 0.25 });
+  observer.observe(section);
+}
+
+function initCarouselControls() {
+  if (workGalleryState.controlsReady) return;
+  const prev = $('#carouselPrevBtn');
+  const next = $('#carouselNextBtn');
+  prev && prev.addEventListener('click', () => stepCarousel('prev'));
+  next && next.addEventListener('click', () => stepCarousel('next'));
+  workGalleryState.controlsReady = true;
+}
+
+function stepCarousel(direction) {
+  const key = workGalleryState.active;
+  if (key === '3d') return;
+
+  const items = workGalleryState[key];
+  if (!items || items.length < 2) return;
+
+  if (direction === 'next') {
+    items.push(items.shift());
+  } else {
+    items.unshift(items.pop());
+  }
+
+  renderCarousel(key);
+}
+
+function initVideoCardPreview(card, video, preview) {
+  let hoverTimer = null;
+
+  const destroyPreview = () => {
+    preview.classList.remove('show');
+    preview.innerHTML = '';
+  };
+
+  card.addEventListener('mouseenter', () => {
+    hoverTimer = setTimeout(() => {
+      if (preview.childElementCount) return;
+      const iframe = document.createElement('iframe');
+      iframe.src = getPreviewUrl(video, true);
+      iframe.allowFullscreen = true;
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.title = `${video.title} preview`;
+      preview.appendChild(iframe);
+      preview.classList.add('show');
+    }, 180);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    clearTimeout(hoverTimer);
+    destroyPreview();
+  });
+}
