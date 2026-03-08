@@ -15,6 +15,7 @@
 <div id="cursor-outer"></div>
 <div id="cursor-inner"></div>
 <div id="cursor-label"></div>
+<div id="cursor-spotlight"></div>
 <div id="progress"></div>
 
 <!-- THEME -->
@@ -24,7 +25,7 @@
 </button>
 
 <!-- NAV -->
-<nav id="nav">
+<nav id="nav" class="glass-nav">
   <a href="#" class="nav-brand">
   <img src="narottam.png" class="nav-photo">
   Narottam Sharan
@@ -197,22 +198,24 @@
       <a href="#work" class="btn-line sr d2 mag-btn">See Full Portfolio →</a>
     </div>
     <div class="sr d2">
-      <div class="yt-frame-wrap">
-        <!-- Replace VIDEO_ID with your actual YouTube video ID -->
-        <iframe
-          src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&color=white"
-          title="Narottam Sharan — Featured Work"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
+      <div class="featured-video glass-panel" id="featuredVideo" data-video-id="lz4s5zU7Bo0" data-video-url="https://youtu.be/lz4s5zU7Bo0">
+        <button class="featured-video-stage" id="featuredVideoTrigger" type="button" aria-label="Play featured video">
+          <img class="featured-video-thumb" id="featuredVideoThumb" src="https://img.youtube.com/vi/lz4s5zU7Bo0/maxresdefault.jpg" alt="Featured video thumbnail">
+          <span class="featured-video-blur"></span>
+          <span class="featured-video-play"><span class="featured-video-play-icon">&#9654;</span></span>
+          <span class="featured-video-overlay"></span>
+        </button>
+        <div class="featured-video-frame" id="featuredVideoFrame"></div>
       </div>
       <div class="yt-label">
         <div>
-          <div class="yt-title">GDG Event Recap — Motion &amp; Edit Showreel</div>
-          <div class="yt-sub">Google Developers Group · Bhilai · 2024–25</div>
+          <div class="yt-title" id="featuredVideoTitle">Featured Video</div>
+          <div class="yt-sub" id="featuredVideoMeta">Loading project details...</div>
+          <div class="yt-desc" id="featuredVideoDesc">Loading caption...</div>
         </div>
         <div class="yt-tag">Featured Video</div>
       </div>
+    </div>
     </div>
   </div>
 </section>
@@ -244,7 +247,6 @@
 <!-- ══ WORK ══ -->
  
 <section id="work">
-  
   <div class="work-inner container">
     <div class="work-header">
       <div>
@@ -252,56 +254,40 @@
         <h2 class="section-title sr d1">Selected <em>Work</em></h2>
       </div>
     </div>
-    <div class="filter-row sr d1">
+    <div class="filter-row sr d2">
       <button class="filt on" data-f="all">All</button>
       <button class="filt" data-f="reels">Reels</button>
       <button class="filt" data-f="longform">Long Form</button>
       <button class="filt" data-f="3d">3D Motion</button>
     </div>
 
-    <!-- REELS — vertical 9:16 -->
-    <div id="work-reels" style="margin-top:32px;">
-      <div class="eyebrow sr" style="margin-bottom:16px;">Short-Form &amp; Reels</div>
-      <div class="reels-row">
-        <div class="reel-item sr d1" data-cat="reels"><div class="w-bg wbg2"><div class="w-lbl">GDG</div></div><div class="w-overlay"><div class="w-tag">Reel · Tech</div><div class="w-title">GDG Event Reel</div></div></div>
-        <div class="reel-item sr d2" data-cat="reels"><div class="w-bg wbg5"><div class="w-lbl">Hack</div></div><div class="w-overlay"><div class="w-tag">Reel · Event</div><div class="w-title">Flash Hack BTS</div></div></div>
-        <div class="reel-item sr d3" data-cat="reels"><div class="w-bg wbg3"><div class="w-lbl">Priya</div></div><div class="w-overlay"><div class="w-tag">Reel · Personal Brand</div><div class="w-title">Kriti Priya — Content</div></div></div>
-        <div class="reel-item sr d4" data-cat="reels"><div class="w-bg wbg7"><div class="w-lbl">Nadavi</div></div><div class="w-overlay"><div class="w-tag">Reel · Finance</div><div class="w-title">Nadavi Loans Promo</div></div></div>
+    <div id="work-carousel-wrap" class="sr d3 work-full-bleed" style="margin-top:32px;">
+      <div class="carousel-wrapper">
+        <button class="carousel-btn left" id="carouselPrevBtn" aria-label="Previous videos">&lt;</button>
+        <div class="video-carousel" id="videoCarousel">
+          <div class="carousel-track" id="workCarouselTrack"></div>
+        </div>
+        <button class="carousel-btn right" id="carouselNextBtn" aria-label="Next videos">&gt;</button>
       </div>
     </div>
 
-    <!-- LONG FORM — horizontal 16:9 -->
-    <div id="work-long" style="margin-top:36px;">
-      <div class="eyebrow sr" style="margin-bottom:16px;">Long Form &amp; Brand Films</div>
-      <div class="longform-row">
-        <div class="long-item sr d1" data-cat="longform"><div class="w-bg wbg1"><div class="w-lbl">Creovzone</div></div><div class="w-overlay"><div class="w-tag">Brand Film · AI Platform</div><div class="w-title">Creovzone — AI Coding Platform</div></div></div>
-        <div class="long-item sr d2" data-cat="longform"><div class="w-bg wbg6"><div class="w-lbl">Deadline</div></div><div class="w-overlay"><div class="w-tag">Documentary · Long-form</div><div class="w-title">Romanticizing Deadline</div></div></div>
-        <div class="long-item sr d3" data-cat="longform"><div class="w-bg wbg4"><div class="w-lbl">SIH 24</div></div><div class="w-overlay"><div class="w-tag">Event Film · BTS</div><div class="w-title">SIH 24 Behind The Scenes</div></div></div>
-        <div class="long-item sr d4" data-cat="longform"><div class="w-bg wbg2"><div class="w-lbl">HackIndia</div></div><div class="w-overlay"><div class="w-tag">Event Highlight</div><div class="w-title">HackIndia Spark 6</div></div></div>
+    <div id="work-3d" class="sr d3" style="margin-top:32px;display:none;">
+      <div class="coming-soon-banner">
+        <div class="cs-icon">3D</div>
+        <div class="cs-title">3D Motion Design - Coming Soon</div>
+        <div class="cs-sub">Currently in production</div>
       </div>
-    </div>
-
-    <!-- 3D COMING SOON -->
-    <div id="work-3d" style="margin-top:36px;display:none;">
-      <div class="eyebrow sr" style="margin-bottom:16px;">3D Motion Design</div>
-      <div class="coming-soon-banner sr">
-        <div class="cs-icon">🧊</div>
-        <div class="cs-title">3D Work — Coming Soon</div>
-        <div class="cs-sub">Currently in production · Check back soon</div>
-      </div>
-    </div>
-
-
-    <!-- AI AUTO VIDEO GALLERY -->
-    <div style="margin-top:60px">
-
-      <div class="eyebrow">Auto Video Gallery</div>
-
-      <div id="autoVideoGallery" class="video-auto-grid"></div>
-
     </div>
   </div>
 </section>
+
+<div class="video-modal" id="videoModal" aria-hidden="true">
+  <div class="video-modal-backdrop" id="videoModalBackdrop"></div>
+  <div class="video-modal-dialog">
+    <button class="video-modal-close" id="videoModalClose" aria-label="Close video">Close</button>
+    <div class="video-modal-frame" id="videoModalFrame"></div>
+  </div>
+</div>
 
 <!-- ══ SERVICES ══ -->
 <section id="services">
@@ -322,84 +308,21 @@
 <!-- ══ SOCIAL PROOF ══ -->
 <section id="clients">
   <div class="clients-inner container">
-    <div class="eyebrow sr">Social Proof</div>
-    <h2 class="section-title sr d1">Client <em>Reviews</em></h2>
-    <p class="sr d2" style="font-size:.82rem;color:var(--fg3);margin-top:10px;max-width:500px;">What real clients say after working together.</p>
-    <div class="reviews-grid">
-
-      <div class="review-card sr d1">
-        <div class="review-kpi"><span class="review-kpi-val">30%</span><span class="review-kpi-lbl">Retention↑</span></div>
-        <div class="review-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <div class="review-text">Narottam completely transformed our GDG content. The event recaps felt cinematic and our audience retention jumped significantly. He just gets the tech world without you having to explain everything.</div>
-        <div class="review-author">
-          <div class="review-avatar">GD</div>
-          <div>
-            <div class="review-name">GDG Bhilai</div>
-            <div class="review-handle">Google Developers Group · 500+ community</div>
-          </div>
-        </div>
+    <div class="testimonial-head">
+      <div>
+        <div class="eyebrow sr">Social Proof</div>
+        <h2 class="section-title sr d1">Client <em>Testimonials</em></h2>
+        <p class="sr d2 testimonial-intro">Trusted by creators, communities, and brands that need cinematic editing with reliable turnaround.</p>
       </div>
-
-      <div class="review-card sr d2">
-        <div class="review-kpi"><span class="review-kpi-val">15+</span><span class="review-kpi-lbl">Videos</span></div>
-        <div class="review-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <div class="review-text">Working with Narottam was seamless. He delivered over 15 videos consistently on time, each one better than the last. The quality and professionalism is genuinely top-tier for someone his age.</div>
-        <div class="review-author">
-          <div class="review-avatar">SS</div>
-          <div>
-            <div class="review-name">Santosh Suna</div>
-            <div class="review-handle">Content Creator</div>
-          </div>
-        </div>
+      <div class="testimonial-controls sr d2">
+        <button class="testimonial-btn glass-btn" id="testimonialPrev" aria-label="Previous testimonial">&lt;</button>
+        <button class="testimonial-btn glass-btn" id="testimonialNext" aria-label="Next testimonial">&gt;</button>
       </div>
-
-      <div class="review-card sr d3">
-        <div class="review-kpi"><span class="review-kpi-val">100%</span><span class="review-kpi-lbl">On-Time</span></div>
-        <div class="review-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <div class="review-text">Every single deadline was hit. The videos Narottam created for Nadavi simplified our financial services in a way that resonated with our digital audience. Clean, clear and conversion-focused.</div>
-        <div class="review-author">
-          <div class="review-avatar">NL</div>
-          <div>
-            <div class="review-name">Nadavi Loans</div>
-            <div class="review-handle">Financial Services Brand</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card sr d4">
-        <div class="review-kpi"><span class="review-kpi-val">Same-Day</span><span class="review-kpi-lbl">Delivery</span></div>
-        <div class="review-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <div class="review-text">Narottam edited and delivered our highlight reel the same day as the event. That kind of turnaround under pressure without compromising quality is rare and incredibly valuable for live events.</div>
-        <div class="review-author">
-          <div class="review-avatar">TS</div>
-          <div>
-            <div class="review-name">Techstars Startup Weekend</div>
-            <div class="review-handle">Bhilai · 2025</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card sr d5">
-        <div class="review-kpi"><span class="review-kpi-val">↑ Growth</span><span class="review-kpi-lbl">Engagement</span></div>
-        <div class="review-stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
-        <div class="review-text">My content looks completely different after working with Narottam. The style, pacing, storytelling — it all aligned with my brand identity and my audience noticed immediately. Highly recommend.</div>
-        <div class="review-author">
-          <div class="review-avatar">KP</div>
-          <div>
-            <div class="review-name">Kriti Priya</div>
-            <div class="review-handle">Personal Brand · Content Creator</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="review-card sr d6" style="display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:16px;padding:40px;">
-        <div style="font-size:2rem;opacity:.3;">✦</div>
-        <div style="font-family:var(--font-d);font-style:italic;font-size:1rem;color:var(--fg2);">Your brand could be next</div>
-        <p style="font-size:.72rem;color:var(--fg3);line-height:1.8;">Ready to create content that actually converts? Let's talk about your project.</p>
-        <a href="#contact" class="btn-fill mag-btn" style="margin-top:8px;"><span>Get in Touch</span><span>→</span></a>
-      </div>
-
     </div>
+    <div class="testimonial-carousel sr d3">
+      <div class="testimonial-track" id="testimonialTrack"></div>
+    </div>
+    <div class="testimonial-dots sr d3" id="testimonialDots"></div>
   </div>
 </section>
 
@@ -419,16 +342,36 @@
           <div class="ci"><div class="ci-icon">📍</div><div><div class="ci-lbl">Location</div><div class="ci-val">Bhilai, Chhattisgarh · Open to Remote</div></div></div>
         </div>
       </div>
-      <div class="c-form sr-r d2">
-        <div class="fg-row">
-          <div class="fg"><input type="text" id="fn" placeholder="Name"><label for="fn">Full Name</label></div>
-          <div class="fg"><input type="email" id="fe" placeholder="Email"><label for="fe">Email Address</label></div>
+      <form class="c-form glass-panel sr-r d2" name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="contact">
+        <p hidden>
+          <label>Don't fill this out:
+            <input name="bot-field">
+          </label>
+        </p>
+        <div class="c-form-top">
+          <div class="c-form-kicker">Start a Project</div>
+          <div class="c-form-title">Tell me about your next video.</div>
         </div>
-        <div class="fg"><input type="text" id="fc" placeholder="Company"><label for="fc">Company / Brand</label></div>
-        <div class="fg"><input type="text" id="fs" placeholder="Service"><label for="fs">Service Required</label></div>
-        <div class="fg"><textarea id="fm" rows="5" placeholder="Message"></textarea><label for="fm">Your Message</label></div>
-        <button class="c-submit mag-btn" id="submitBtn"><span>Send Message</span><span>→</span></button>
-      </div>
+        <div class="fg-row">
+          <div class="fg"><input type="text" id="fn" name="name" placeholder="Full Name" required><label for="fn">Full Name</label></div>
+          <div class="fg"><input type="email" id="fe" name="email" placeholder="Email Address" required><label for="fe">Email Address</label></div>
+        </div>
+        <div class="fg"><input type="text" id="fc" name="company" placeholder="Company / Brand"><label for="fc">Company / Brand</label></div>
+        <div class="fg"><input type="text" id="fs" name="service" placeholder="Service Required"><label for="fs">Service Required</label></div>
+        <div class="fg"><textarea id="fm" name="message" rows="5" placeholder="Your Message"></textarea><label for="fm">Your Message</label></div>
+        <button class="c-submit mag-btn" id="submitBtn" type="submit">
+          <span class="c-submit-text">Send Message</span>
+          <span class="c-submit-arrow">&rarr;</span>
+        </button>
+        <div class="form-success" id="formSuccess" aria-live="polite">
+          <div class="form-success-icon">&check;</div>
+          <div>
+            <div class="form-success-title">Message Sent Successfully</div>
+            <div class="form-success-text">Thank you for reaching out. I'll reply within 24 hours.</div>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 </section>
@@ -449,3 +392,4 @@
 <script src="main.js"></script>
 </body>
 </html>
+
