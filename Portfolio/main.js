@@ -20,6 +20,7 @@ const VIDEO_URLS = [
   "https://www.instagram.com/reel/DOlQhOBidrr/",
   "https://www.instagram.com/reel/DI6fvdkomzh/",
   "https://www.instagram.com/reel/DNnOoPXzQ9U/",
+   "https://youtu.be/JUniWk39d2I",
   "https://www.instagram.com/reel/DOiMIqAjMMd/"
 ];
 
