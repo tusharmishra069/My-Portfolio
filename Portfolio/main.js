@@ -12,6 +12,7 @@ const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 /* ── VIDEO DATA ── */
 const VIDEO_URLS = [
   "https://www.youtube.com/embed/lz4s5zU7Bo0",
+  "https://youtube.com/shorts/EdgAYZ2Hq9g?si=SBffhKz71hy2zcQo"
   "https://www.youtube.com/embed/j6ympOT2sXc",
   "https://www.youtube.com/embed/HHviymdkkBc",
   "https://youtube.com/embed/DGs_9L6PwrA",
