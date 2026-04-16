@@ -2,8 +2,6 @@
    NAROTTAM SHARAN PORTFOLIO — style.css v4
    Rewritten by Advanced Developer
 ═══════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,200;9..144,300;9..144,400;9..144,700&family=Cormorant+Garamond:ital,wght@0,400;1,400;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=swap');
-
 /* ── TOKENS ── */
 :root {
   --bg:#09090b; --bg2:#0f0f12; --bg3:#141418; --card:#1a1a1f;

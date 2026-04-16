@@ -9,6 +9,15 @@ const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 
+const safeStorage = {
+  get(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  },
+  set(key, value) {
+    try { localStorage.setItem(key, value); } catch {}
+  }
+};
+
 /* ── VIDEO DATA ── */
 const VIDEO_URLS = [
   "https://www.youtube.com/embed/lz4s5zU7Bo0",
@@ -76,12 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTheme() {
   const btn = $('#themeBtn');
   const html = document.documentElement;
-  const saved = localStorage.getItem('ns-theme') || 'dark';
+  const saved = safeStorage.get('ns-theme') || 'dark';
   html.setAttribute('data-theme', saved);
+  if (!btn) return;
   btn.addEventListener('click', () => {
     const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', next);
-    localStorage.setItem('ns-theme', next);
+    safeStorage.set('ns-theme', next);
     if (window._canvasColorUpdate) window._canvasColorUpdate();
   });
 }
@@ -801,8 +811,11 @@ function initParallax() {
 /* ═══════════════════ PROGRESS ═══════════════════ */
 function initProgress() {
   const bar = $('#progress');
+  if (!bar) return;
   window.addEventListener('scroll', () => {
-    bar.style.width = (scrollY / (document.documentElement.scrollHeight - innerHeight) * 100) + '%';
+    const denom = document.documentElement.scrollHeight - innerHeight;
+    const pct = denom > 0 ? (scrollY / denom) * 100 : 0;
+    bar.style.width = `${clamp(pct, 0, 100)}%`;
   }, { passive: true });
 }
 
@@ -811,7 +824,9 @@ function initSmoothScroll() {
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#"]');
     if (!a) return;
-    const t = document.querySelector(a.getAttribute('href'));
+    const href = a.getAttribute('href');
+    if (!href || href === '#') return;
+    const t = document.querySelector(href);
     if (!t) return;
     e.preventDefault();
     t.scrollIntoView({ behavior: 'smooth' });
@@ -825,29 +840,52 @@ function initForm() {
   const form = btn ? btn.closest('form') : null;
   if (!btn || !form) return;
 
-  // Listen on the form's submit event so validation runs for keyboard/Enter too
   form.addEventListener('submit', e => {
-    e.preventDefault(); // prevent native navigation — required for Netlify AJAX
+    e.preventDefault();
 
     const name = $('#fn').value.trim();
     const email = $('#fe').value.trim();
+    const message = $('#fm')?.value.trim() || '';
     if (!name) { flashField('#fn'); return; }
     if (!email) { flashField('#fe'); return; }
 
     const text = $('.c-submit-text', btn);
     const arrow = $('.c-submit-arrow', btn);
+    const recipient = form.dataset.formRecipient || 'narottamsharan.work@gmail.com';
+    const endpoint = form.dataset.formEndpoint?.trim();
+    const company = $('#fc')?.value.trim() || 'Not provided';
+    const service = $('#fs')?.value.trim() || 'Not provided';
+
     if (text) text.textContent = 'Sending…';
     if (arrow) arrow.textContent = '…';
     btn.disabled = true;
     if (success) success.classList.remove('show');
 
-    // Netlify AJAX form submission
-    fetch('/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(new FormData(form)).toString()
-    })
+    const payload = {
+      name,
+      email,
+      company,
+      service,
+      message
+    };
+
+    const sendRequest = endpoint
+      ? fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+      : Promise.resolve();
+
+    sendRequest
       .then(() => {
+        if (!endpoint) {
+          const subject = encodeURIComponent(`Project inquiry from ${name}`);
+          const body = encodeURIComponent(
+            `Name: ${name}\nEmail: ${email}\nCompany: ${company}\nService: ${service}\n\nMessage:\n${message || 'Not provided'}`
+          );
+          window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+        }
         if (text) text.textContent = 'Sent!';
         if (arrow) arrow.textContent = '✓';
         if (success) success.classList.add('show');
@@ -863,7 +901,7 @@ function initForm() {
         if (text) text.textContent = 'Send Message';
         if (arrow) arrow.innerHTML = '&rarr;';
         btn.disabled = false;
-        flashField('#fn'); // surface an error hint
+        flashField('#fm');
       });
   });
 
